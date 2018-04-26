@@ -3,6 +3,7 @@ classdef expert
     properties
         comments;
         id;
+        useGainCorr@logical=false;
     end
     
     properties (SetAccess=protected)
@@ -14,7 +15,6 @@ classdef expert
         trainSet
         testSet
         gainPerTime
-        useGainCorr
         xGrid
         yGrid
     end
@@ -130,28 +130,20 @@ classdef expert
             end
         end
         
-        function e = setGain(e,varargin)
-            pin=inputParser;
-            pin.addRequired('e');
-            pin.addParameter('gainPerTime',[],@isnumeric);
-            pin.addParameter('useGainCorr',false,@islogical);
-            pin.parse(e,varargin{:})
-            p = pin.Results;
-            
-            if isempty(p.gainPerTime)
-                p.gainPerTime = ones(size(e.time));
+        function e = setGain(e,vals,varargin)           
+            if isempty(vals)
+                vals = ones(size(e.time));
             end
             
-            if any(p.gainPerTime <= 0)
-                error(['Gain values cannot be 0 or below 0, element(s) (',num2str(find(~p.gainPerTime)),') is/are ' num2str(p.gainPerTime<=0)])
+            if any(vals <= 0)
+                error(['Gain values cannot be 0 or below 0, element(s) (',num2str(find(~vals)),') is/are ' num2str(vals<=0)])
             end
             
-            if numel(p.gainPerTime) ~= numel(e.time)
+            if numel(vals) ~= numel(e.time)
                 error('Gain must be a vector with a length equal to the number of time points')
             end
             
-            e.useGainCorr = p.useGainCorr;
-            e.gainPerTime = p.gainPerTime(:)';
+            e.gainPerTime = vals(:)';
             
             %If the expert has already been trained, we now need to re-compute the PDFs with the new gain values
             if ~isempty(e.epf)
@@ -167,7 +159,8 @@ classdef expert
             pin.addRequired('setType',@(x) any(strcmpi(x,{'TRAIN', 'TEST'})));
             pin.addParameter('from',[]);
             pin.addParameter('to',[]);
-            pin.addParameter('flags',[],@(x) islogical(x) && isequal(size(x),size(e.time)));
+            pin.addParameter('flags',[],@(x) isequal(size(x),size(e.time)));
+            %pin.addParameter('flags',[],@(x) islogical(x) && isequal(size(x),size(e.time)));
             pin.parse(e,setType,varargin{:})
             p = pin.Results;
             setType = lower(setType);
