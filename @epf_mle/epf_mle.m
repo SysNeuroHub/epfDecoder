@@ -210,7 +210,7 @@ classdef epf_mle
             pullers = zeros(nConditions,5,nTrialsPerSet,nTime);
             for i=1:d.nConditions
                 [decX(i,:,:),decY(i,:,:),entropy(i,:,:),pullers(i,:,:,:)]=decode(d,popResp(:,:,:,i));
-            end          
+            end
         end
         
         function [xHat,yHat,entropy,pullers] = decode(d,popResp)
@@ -269,7 +269,8 @@ classdef epf_mle
             pin.addRequired('ex');
             pin.addRequired('ey');
             pin.addRequired('spkCounts');
-            pin.parse(expertInd,ex,ey,spkCounts);
+            pin.addParameter('time',[]);
+            pin.parse(expertInd,ex,ey,spkCounts,varargin{:});
             
             d.experts(expertInd) = addSpkCounts(d.experts(expertInd),ex,ey,spkCounts,varargin{:});
         end
@@ -565,6 +566,8 @@ classdef epf_mle
             end
             quiver(ex,ey,x.p50-ex,y.p50-ey,0,'.','linestyle',':','color',[0.5, 0.5,0.5]);
             xlabel('Eye position (X)'); ylabel('Eye position (Y)'); title(p.title); axis equal;
+            xlim([d.xSpace(1),d.xSpace(end)]);
+            ylim([d.ySpace(1),d.ySpace(end)]);
         end
         
         function plot_h = plotStat(d,analLabel,fieldName,varargin)
@@ -694,7 +697,6 @@ classdef epf_mle
             [decX, decY, entropy] = deal(zeros(p.nSets,p.nConditions,p.nTrialsPerSet,p.nTime));
             pullers = zeros(p.nSets,p.nConditions,5,p.nTrialsPerSet,p.nTime);
             for i=1:p.nSets
-                
                 %Get population responses for N test trials, [nConditions x nTrialsPerSet x nTime x nExperts]
                 popResp = populationResponse(d,p.nTrialsPerSet);
                 

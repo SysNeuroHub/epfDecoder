@@ -63,7 +63,7 @@ out.r2.perTime = 1-(out.sse.perTime./out.sst.perTime);
 
 %How well does the decoder capture variability in the true eye over TIME in each condition?
 out.sse.perCond = sum(out.dist.^2,1);
-out.sst.perCond = sum(hypot(ex - repmat(mean(ex,1),size(ex,1),1),ey - repmat(mean(ey,1),size(ey,1),1)).^2,1); %Distance of each eye position to the centroid of all eye positions
+out.sst.perCond = sum(hypot(ex - repmat(mean(ex,2),1,size(ex,2)),ey - repmat(mean(ey,2),1,size(ey,2))).^2,1); %Distance of each eye position to the centroid of all eye positions
 out.r2.perCond = 1-(out.sse.perCond./out.sst.perCond);
 
 function out = stats(data)

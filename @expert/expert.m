@@ -110,8 +110,14 @@ classdef expert
             e.ey = ey;
             e.time = timeVals(:)';
             
-            %Populate nTimes list of gain values with default values
+            %Populate nTimes list of gain values with default values. Check
+            %if gainPerTime is populated with anything other than default
+            %values, if it is empty, or if the number of gain values
+            %doesn't match the number of test block times. If any of these
+            %conditions are met, reset gain to default values
+            if ~any(e.gainPerTime~=1)||isempty(e.gainPerTime)||numel(e.gainPerTime)~=numel(e.trainSet.times)
             e = setGain(e);
+            end
             
             %Flag all trials for both training and testing
             e = flagTrials(e,'TRAIN');
@@ -254,7 +260,9 @@ classdef expert
             pin.addRequired('e');
             pin.addRequired('xGrid');
             pin.addRequired('yGrid');
+            pin.addParameter('noPDF',false)
             pin.parse(e,xGrid,yGrid,varargin{:});
+            p = pin.Results;
             e.xGrid = xGrid;
             e.yGrid = yGrid;
             
@@ -279,7 +287,9 @@ classdef expert
             e.epf = glm(e.epf,e.trainSet.ex,e.trainSet.ey,counts);
             
             %Pre-compute the likelihood and posterior probability functions
-            e=computePDFs(e);
+            if ~p.noPDF
+                e=computePDFs(e);
+            end
         end
         
         function e = computePDFs(e)
@@ -412,6 +422,10 @@ classdef expert
             e.maxSpikeCount  = max(cellfun(globalMax,e.spkCounts));
         end
         
+        function e = setParadigm(e,paradigm)
+            e.paradigm = paradigm;
+        end
+               
         function [out,fig_h] = fitEPF(e,varargin)
             %Fit an epf (regression) to the spike counts for a given time interval
             %Note, this function is not used as part of decoding. It's for
@@ -487,7 +501,7 @@ classdef expert
                 %Plot the fitted eye-position field using a polar surface
                 nRadii = 10;
                 th = linspace(-pi,pi,2*nRadii);
-                rad = linspace(0, max(eyeX)*1.2, nRadii);
+                rad = linspace(0, hypot(max(eyeY),max(eyeX)), nRadii);
                 [thGrid,radGrid] = meshgrid(th,rad);
                 [xGrid,yGrid]=pol2cart(thGrid,radGrid);
                 surface = f.feval(xGrid,yGrid);
@@ -497,7 +511,7 @@ classdef expert
                 %Plot the data points
                 h = reflinexyz(eyeX,eyeY,countMean,'linestyle','-','color',[0.5 0.5 0.5],'linewidth',2); delete(h([1 2]));
                 h = errorbar3(eyeX,eyeY,countMean,countSTE,'o');
-                set(h,'markersize',20,'markerfacecolor','r','markeredgecolor','k');
+                set(h,'markersize',15,'markerfacecolor','r','markeredgecolor','k');
                 zlabel('Mean spike count (lambda)'); grid on;
                 %Plot markers on the floor
                 nPoints = 1000;
